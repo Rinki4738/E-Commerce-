@@ -1,0 +1,46 @@
+<% layout('layouts/boilerplate') %>
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+  <div class="col-md-6 col-lg-5 shadow p-5 rounded bg-light">
+    
+    <%- include('../partials/flash') %>
+
+    <h2 class="mb-4 text-center">Create a New Account</h2>
+    
+    <form action="/register" method="POST">
+
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" name="username" id="username" class="form-control" placeholder="Enter username" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
+      </div>
+
+      <div class="mb-4">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="Enter email" required>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label d-block">Register as:</label>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="role" id="buyer" value="Buyer" required>
+          <label class="form-check-label" for="buyer">Buyer</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="role" id="seller" value="Seller" required>
+          <label class="form-check-label" for="seller">Seller</label>
+        </div>
+      </div>
+
+      <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-success btn-block">Sign Up</button>
+      </div>
+
+      <p class="text-center">Already have an account? <a href="/login" class="text-decoration-none">Login</a></p>
+    </form>
+  </div>
+</div>

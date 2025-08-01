@@ -1,0 +1,66 @@
+<%layout('layouts/boilerplate') %>
+<%-include('../partials/nav') %>
+
+<div class="row">
+    <div class="col-4 mx-auto card border border-success p-4">
+        <form action="/products/<%=foundproduct.id%>?_method=PATCH" method="POST" class="needs-validation" novalidate>
+            <div class="mb-5">
+                <label for="name">Name</label>
+                <input type="text" name="name" id="name" placeholder="enter the name of product" class="form-control" value="<%=foundproduct.name%>" required>
+                 <div class="invalid-feedback">
+                Please choose a name.
+            </div>
+            </div>
+             <div class="mb-5">
+                <label for="img">Image</label>
+                <input type="text" name="image" id="img" placeholder="enter the url of image" class="form-control" value="<%=foundproduct.image%>" required>
+                 <div class="invalid-feedback">
+                Please choose a url.
+            </div>
+            </div>
+             <div class="mb-5">
+                <label for="price">Price</label>
+                <input type="text" name="price" id="price" placeholder="enter the price of image" class="form-control" value="<%=foundproduct.price%>" required>
+                 <div class="invalid-feedback">
+                Please choose a price.
+            </div>
+            </div>
+             <div class="mb-5">
+                <label for="des">Description</label>
+                <textarea name="desc" id="des" placeholder="write the description" class="form-control" required><%=foundproduct.desc%></textarea>
+                 <div class="invalid-feedback">
+                Please write descricption.
+            </div>
+            </div>
+            <div>
+                <button class="btn btn-success">Edit</button>
+            </div>
+            
+        </form>
+    </div>
+</div>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+(() => {
+  'use strict'
+
+  // Fetch all the forms we want to apply custom Bootstrap validation styles to
+  const forms = document.querySelectorAll('.needs-validation')
+
+  // Loop over them and prevent submission
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
+</body>
+
+
+   

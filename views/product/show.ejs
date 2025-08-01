@@ -1,0 +1,119 @@
+<% layout('layouts/boilerplate') %>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <!-- Product Card -->
+    <div class="col-lg-5">
+      <div class="card shadow">
+        <img src="<%= foundproduct.image %>" class="card-img-top" alt="Product Image">
+        <div class="card-body">
+          <h3 class="card-title"><%= foundproduct.name %></h3>
+          <h4 class="text-success mb-3">₹<%= foundproduct.price %></h4>
+          <p class="card-text"><%= foundproduct.desc %></p>
+
+          <% if (currentUser && currentUser.role === 'Seller') { %>
+            <a href="/products/<%= foundproduct.id %>/edit" class="btn btn-outline-primary mb-2">Edit Product</a>
+          <% } %>
+
+          <!-- Buy Now Button -->
+          <form action="/payment_gateway/payumoney" method="POST" class="mb-2">
+            <input type="hidden" name="amount" value="<%= foundproduct.price %>">
+            <input type="hidden" name="productinfo" value="<%= foundproduct.name %>">
+            <input type="hidden" name="phone" value="9999999999">
+            <input type="hidden" name="service_provider" value="payu_paisa">
+            <button type="submit" class="btn btn-success w-100">Buy Now ₹<%= foundproduct.price %></button>
+          </form>
+
+          <!-- Add to Cart -->
+          <form action="/user/<%= foundproduct.id %>/add" method="POST">
+            <button class="btn btn-outline-dark w-100">Add to Cart 🛒</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Section -->
+    <div class="col-lg-6 mt-4 mt-lg-0">
+      <h2 class="mb-3">Leave a Review</h2>
+      <form action="/products/<%= foundproduct.id %>/review" method="POST" class="mb-4">
+        <!-- Rating -->
+        <fieldset class="starability-basic mb-2">
+          <input type="radio" id="no-rate" class="input-no-rate" name="rating" value="0" checked aria-label="No rating." />
+          <input type="radio" id="first-rate1" name="rating" value="1" />
+          <label for="first-rate1" title="Terrible">1 star</label>
+          <input type="radio" id="first-rate2" name="rating" value="2" />
+          <label for="first-rate2" title="Not good">2 stars</label>
+          <input type="radio" id="first-rate3" name="rating" value="3" />
+          <label for="first-rate3" title="Average">3 stars</label>
+          <input type="radio" id="first-rate4" name="rating" value="4" />
+          <label for="first-rate4" title="Very good">4 stars</label>
+          <input type="radio" id="first-rate5" name="rating" value="5" />
+          <label for="first-rate5" title="Amazing">5 stars</label>
+        </fieldset>
+
+        <!-- Comment -->
+        <div class="mb-3">
+          <label for="comment" class="form-label">Comment</label>
+          <textarea name="comment" class="form-control" rows="2" required></textarea>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary">Submit Review</button>
+      </form>
+
+      <!-- Show Existing Reviews -->
+      <% if (foundproduct.reviews.length > 0) { %>
+        <% foundproduct.reviews.forEach(item => { %>
+          <div class="card mb-3">
+            <div class="card-header">
+              <%= item.createdAt ? item.createdAt.toDateString() : '' %>
+            </div>
+            <div class="card-body">
+              <p class="starability-result" data-rating="<%= item.rating %>">Rated: <%= item.rating %> stars</p>
+              <p class="card-text">Comment: <%= item.comment %></p>
+              <a href="#" class="btn btn-sm btn-danger">Delete</a>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p>No reviews yet.</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Card Payment Form -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="/payment" method="post" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Payment Form</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="productId" value="<%= foundproduct._id %>">
+        <div class="mb-3">
+          <label for="cardName" class="form-label">Cardholder Name</label>
+          <input type="text" name="cardName" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="cardNumber" class="form-label">Card Number</label>
+          <input type="text" name="cardNumber" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="expiry" class="form-label">Expiry Date</label>
+          <input type="month" name="expiry" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="cvv" class="form-label">CVV</label>
+          <input type="password" name="cvv" maxlength="3" class="form-control" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success w-100">Pay ₹<%= foundproduct.price %></button>
+      </div>
+    </form>
+  </div>
+</div>
