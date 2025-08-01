@@ -29,14 +29,12 @@ const User=require('./models/User')
 
 const mongoose = require('mongoose');
 app.use(express.urlencoded({extended:true}));
-mongoose.connect('mongodb://127.0.0.1:27017/shopping-app')
-.then(()=>{
-    console.log("db connected");
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 })
-.catch((err)=>{
-    console.log("error");
-    console.log(err);
-})
+.then(() => console.log("MongoDB connected"))
+.catch(err => console.log("DB connection error:", err));
 // seedDB();
 
 app.use(methodOverride('_method'));
@@ -79,6 +77,7 @@ app.engine('ejs',ejsMate);
 app.set('view engine','ejs');
 app.set('views',path.join(__dirname,'views'));
 app.use(express.static(path.join(__dirname,'public')));
-app.listen(8080,()=>{
-    console.log("server connected");
-})
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
