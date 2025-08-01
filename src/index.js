@@ -10,29 +10,26 @@ const path=require('path');
 const session=require('express-session');
 const flash=require('connect-flash');
 
-const seedDB=require('./seed');
-const productrouter=require('./routes/product');
+const seedDB=require('../seed');
+const productrouter=require('../routes/product');
 
 
-const cartrouter=require('./routes/cart');
-const paymentrouter = require('./routes/payment');
+const cartrouter=require('../routes/cart');
+const paymentrouter = require('../routes/payment');
 const ejsMate=require('ejs-mate');
 const methodOverride=require('method-override');
-const reviewrouter=require('./routes/review');
-const authrouter=require('./routes/auth');
+const reviewrouter=require('../routes/review');
+const authrouter=require('../routes/auth');
 const passport=require('passport');
 const LocalStrategy=require('passport-local')
-const User=require('./models/User')
+const User=require('../models/User')
 
 
 
 
 const mongoose = require('mongoose');
 app.use(express.urlencoded({extended:true}));
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB connected"))
 .catch(err => console.log("DB connection error:", err));
 // seedDB();
