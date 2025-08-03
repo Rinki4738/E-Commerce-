@@ -54,7 +54,7 @@ router.get('/products/:id/edit',isLoggedIn,async(req,res)=>{
     }
     
 })
-router.patch('/products/:id',isLoggedIn,validateproduct,async(req,res)=>{
+router.patch('/products/:id',isLoggedIn,validateproduct,isProductAuthor,async(req,res)=>{
     try{ 
     let {id}=req.params;
     let {name,image,price,desc}=req.body;
