@@ -42,7 +42,7 @@ const {productschema,reviewschema}=require('./schema');
  const isProductAuthor= async(req,res,next)=>{
    let {id}=req.params;
    const foundproduct= await Product.findById(id);
-   if(!foundproduct.author.equals(req.user.id)){
+   if(!foundproduct.author.equals(req.user._id)){
       req.flash('error','you are not the authorized user for this product');
        return res.redirect('/products');
    }
