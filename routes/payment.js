@@ -1,14 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe'); // ✅ IMPORTANT: init later
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Product = require('../models/Products');
 const { isLoggedIn } = require('../middleware');
 
-// Create Stripe Checkout Session for Single Product (Buy Now)
+
+// helper: safe stripe init
+function getStripeClient() {
+    if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error("STRIPE_SECRET_KEY is missing in environment variables");
+    }
+    return stripe(process.env.STRIPE_SECRET_KEY);
+}
+
+
+// BUY NOW (Single Product)
 router.post('/buy-now/:productId', isLoggedIn, async (req, res) => {
     try {
+        const stripeClient = getStripeClient();
+
         const { productId } = req.params;
         const product = await Product.findById(productId);
 
@@ -18,8 +30,7 @@ router.post('/buy-now/:productId', isLoggedIn, async (req, res) => {
 
         const user = await User.findById(req.user._id);
 
-        // Create Stripe Checkout Session for single product
-        const session = await stripe.checkout.sessions.create({
+        const session = await stripeClient.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -41,40 +52,34 @@ router.post('/buy-now/:productId', isLoggedIn, async (req, res) => {
             customer_email: user.email
         });
 
-        // Save order with session ID (status: pending)
-        const order = new Order({
+        const order = await Order.create({
             user: req.user._id,
-            items: [
-                {
-                    product: product._id,
-                    price: product.price
-                }
-            ],
+            items: [{ product: product._id, price: product.price }],
             totalAmount: product.price,
             stripeSessionId: session.id,
             paymentStatus: 'pending'
         });
 
-        await order.save();
-
         res.json({ sessionId: session.id });
+
     } catch (error) {
-        console.error('Error creating buy-now checkout session:', error);
+        console.error("Buy Now Error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Create Stripe Checkout Session for Cart
+
+// CART CHECKOUT
 router.post('/create-checkout-session', isLoggedIn, async (req, res) => {
     try {
+        const stripeClient = getStripeClient();
+
         const user = await User.findById(req.user._id).populate('cart');
-        
+
         if (!user.cart || user.cart.length === 0) {
-            req.flash('error', 'Your cart is empty');
-            return res.redirect('/user/cart');
+            return res.status(400).json({ error: 'Cart is empty' });
         }
 
-        // Prepare line items for Stripe
         const lineItems = user.cart.map(product => ({
             price_data: {
                 currency: 'inr',
@@ -83,16 +88,14 @@ router.post('/create-checkout-session', isLoggedIn, async (req, res) => {
                     description: product.desc || 'Product',
                     images: product.image ? [product.image] : []
                 },
-                unit_amount: Math.round(product.price * 100) // Stripe expects amount in paise for INR
+                unit_amount: Math.round(product.price * 100)
             },
             quantity: 1
         }));
 
-        // Calculate total
-        const totalAmount = user.cart.reduce((sum, product) => sum + product.price, 0);
+        const totalAmount = user.cart.reduce((sum, p) => sum + p.price, 0);
 
-        // Create Stripe Checkout Session
-        const session = await stripe.checkout.sessions.create({
+        const session = await stripeClient.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'payment',
@@ -101,103 +104,88 @@ router.post('/create-checkout-session', isLoggedIn, async (req, res) => {
             customer_email: user.email
         });
 
-        // Save order with session ID (status: pending)
-        const orderItems = user.cart.map(product => ({
-            product: product._id,
-            price: product.price
-        }));
-
-        const order = new Order({
+        const order = await Order.create({
             user: req.user._id,
-            items: orderItems,
-            totalAmount: totalAmount,
+            items: user.cart.map(p => ({ product: p._id, price: p.price })),
+            totalAmount,
             stripeSessionId: session.id,
             paymentStatus: 'pending'
         });
 
-        await order.save();
-
         res.json({ sessionId: session.id });
+
     } catch (error) {
-        console.error('Error creating checkout session:', error);
+        console.error("Cart Checkout Error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Payment Success Page
+
+// SUCCESS PAGE
 router.get('/payment/success', isLoggedIn, async (req, res) => {
     try {
-        const sessionId = req.query.session_id;
+        const stripeClient = getStripeClient();
 
-        // Retrieve session from Stripe
-        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        const session = await stripeClient.checkout.sessions.retrieve(req.query.session_id);
+
+        let order;
 
         if (session.payment_status === 'paid') {
-            // Update order status to completed
-            const order = await Order.findOne({ stripeSessionId: sessionId });
-            
+            order = await Order.findOne({ stripeSessionId: session.id });
+
             if (order) {
                 order.paymentStatus = 'completed';
                 await order.save();
 
-                // Clear user's cart after successful payment
-                const user = await User.findById(req.user._id);
-                user.cart = [];
-                await user.save();
-
-                req.flash('success', 'Payment successful! Thank you for your purchase.');
+                await User.findByIdAndUpdate(order.user, { cart: [] });
             }
         }
 
         res.render('payment/success', { order });
+
     } catch (error) {
-        console.error('Error in payment success:', error);
-        req.flash('error', 'Error processing payment confirmation');
+        console.error(error);
         res.redirect('/user/cart');
     }
 });
 
-// Payment Cancel Page
+
+// CANCEL PAGE
 router.get('/payment/cancel', (req, res) => {
-    req.flash('error', 'Payment cancelled. Your cart items are still saved.');
     res.render('payment/cancel');
 });
 
-// Webhook for payment events (optional but recommended for production)
+
+// WEBHOOK (optional but correct)
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
-    let event;
 
     try {
-        event = stripe.webhooks.constructEvent(
+        const event = stripe.webhooks.constructEvent(
             req.body,
             sig,
             process.env.STRIPE_WEBHOOK_SECRET
         );
-    } catch (err) {
-        console.error('Webhook signature verification failed:', err);
-        return res.sendStatus(400);
-    }
 
-    // Handle checkout.session.completed event
-    if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        
-        try {
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+
             const order = await Order.findOne({ stripeSessionId: session.id });
-            if (order && order.paymentStatus === 'pending') {
+
+            if (order) {
                 order.paymentStatus = 'completed';
                 await order.save();
 
-                // Clear user cart
                 await User.findByIdAndUpdate(order.user, { cart: [] });
             }
-        } catch (error) {
-            console.error('Error updating order in webhook:', error);
         }
-    }
 
-    res.sendStatus(200);
+        res.sendStatus(200);
+
+    } catch (err) {
+        console.error("Webhook Error:", err.message);
+        res.sendStatus(400);
+    }
 });
 
 module.exports = router;
