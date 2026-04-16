@@ -38,14 +38,17 @@ router.post('/products',isLoggedIn, isseller,validateproduct,async(req,res)=>{
 })
 router.get('/products/:id',isLoggedIn,async(req,res)=>{
     try{ let {id}=req.params;
-   let foundproduct=await Product.findById(id).populate('reviews');
+   let foundproduct=await Product.findById(id).populate({
+       path: 'reviews',
+       populate: { path: 'author' }
+   });
    res.render('product/show',{foundproduct,msg:req.flash('msg')});}
    catch(e){
      res.status(500).render('error',{err:e.message}) 
    }
    
 })
-router.get('/products/:id/edit',isLoggedIn,async(req,res)=>{
+router.get('/products/:id/edit',isLoggedIn,isProductAuthor,async(req,res)=>{
     try{let {id}=req.params;
     let foundproduct=await Product.findById(id);
     res.render('product/edit',{foundproduct});}

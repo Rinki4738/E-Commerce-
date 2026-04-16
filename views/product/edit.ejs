@@ -1,66 +1,88 @@
 <%layout('layouts/boilerplate') %>
 <%-include('../partials/nav') %>
+<%-include('../partials/flash') %>
 
 <div class="row">
     <div class="col-4 mx-auto card border border-success p-4">
-        <form action="/products/<%=foundproduct.id%>?_method=PATCH" method="POST" class="needs-validation" novalidate>
+        <h2 class="mb-4">Edit Product</h2>
+        <form action="/products/<%=foundproduct.id%>?_method=PATCH" method="POST" class="needs-validation" novalidate onsubmit="return validateProductForm()">
             <div class="mb-5">
-                <label for="name">Name</label>
-                <input type="text" name="name" id="name" placeholder="enter the name of product" class="form-control" value="<%=foundproduct.name%>" required>
-                 <div class="invalid-feedback">
-                Please choose a name.
-            </div>
-            </div>
-             <div class="mb-5">
-                <label for="img">Image</label>
-                <input type="text" name="image" id="img" placeholder="enter the url of image" class="form-control" value="<%=foundproduct.image%>" required>
-                 <div class="invalid-feedback">
-                Please choose a url.
-            </div>
-            </div>
-             <div class="mb-5">
-                <label for="price">Price</label>
-                <input type="text" name="price" id="price" placeholder="enter the price of image" class="form-control" value="<%=foundproduct.price%>" required>
-                 <div class="invalid-feedback">
-                Please choose a price.
-            </div>
-            </div>
-             <div class="mb-5">
-                <label for="des">Description</label>
-                <textarea name="desc" id="des" placeholder="write the description" class="form-control" required><%=foundproduct.desc%></textarea>
-                 <div class="invalid-feedback">
-                Please write descricption.
-            </div>
-            </div>
-            <div>
-                <button class="btn btn-success">Edit</button>
+                <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                <input type="text" name="name" id="name" placeholder="Enter product name" class="form-control" value="<%=foundproduct.name%>" required minlength="3" maxlength="100">
+                <small class="text-danger d-none" id="nameError">Product name must be 3-100 characters</small>
+                <div class="invalid-feedback">Product name is required</div>
             </div>
             
+            <div class="mb-5">
+                <label for="img" class="form-label">Image URL <span class="text-danger">*</span></label>
+                <input type="url" name="image" id="img" placeholder="Enter image URL" class="form-control" value="<%=foundproduct.image%>" required>
+                <small class="text-danger d-none" id="imageError">Please enter a valid image URL</small>
+                <div class="invalid-feedback">Image URL is required</div>
+            </div>
+            
+            <div class="mb-5">
+                <label for="price" class="form-label">Price <span class="text-danger">*</span></label>
+                <input type="text" name="price" id="price" placeholder="Enter price (e.g., 999.99)" class="form-control" value="<%=foundproduct.price%>" required>
+                <small class="text-danger d-none" id="priceError">Please enter a valid price</small>
+                <div class="invalid-feedback">Price is required</div>
+            </div>
+            
+            <div class="mb-5">
+                <label for="des" class="form-label">Description <span class="text-danger">*</span></label>
+                <textarea name="desc" id="des" placeholder="Write product description" class="form-control" required minlength="10" maxlength="1000"><%=foundproduct.desc%></textarea>
+                <small class="text-danger d-none" id="descError">Description must be 10-1000 characters</small>
+                <div class="invalid-feedback">Description is required</div>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success">Update Product</button>
+                <a href="/products/<%=foundproduct.id%>" class="btn btn-outline-secondary">Cancel</a>
+            </div>
         </form>
     </div>
 </div>
+
 <script>
-    // Example starter JavaScript for disabling form submissions if there are invalid fields
-(() => {
-  'use strict'
-
-  // Fetch all the forms we want to apply custom Bootstrap validation styles to
-  const forms = document.querySelectorAll('.needs-validation')
-
-  // Loop over them and prevent submission
-  Array.from(forms).forEach(form => {
-    form.addEventListener('submit', event => {
-      if (!form.checkValidity()) {
-        event.preventDefault()
-        event.stopPropagation()
-      }
-
-      form.classList.add('was-validated')
-    }, false)
-  })
-})()
+function validateProductForm() {
+    const name = document.getElementById('name').value.trim();
+    const image = document.getElementById('img').value.trim();
+    const price = document.getElementById('price').value.trim();
+    const desc = document.getElementById('des').value.trim();
+    
+    let isValid = true;
+    
+    // Reset errors
+    document.getElementById('nameError').classList.add('d-none');
+    document.getElementById('imageError').classList.add('d-none');
+    document.getElementById('priceError').classList.add('d-none');
+    document.getElementById('descError').classList.add('d-none');
+    
+    // Validate name
+    if (name.length < 3 || name.length > 100) {
+        document.getElementById('nameError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    // Validate image URL
+    try {
+        new URL(image);
+    } catch (e) {
+        document.getElementById('imageError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    // Validate price
+    if (!/^\d+(\.\d{1,2})?$/.test(price) || parseFloat(price) <= 0) {
+        document.getElementById('priceError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    // Validate description
+    if (desc.length < 10 || desc.length > 1000) {
+        document.getElementById('descError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    return isValid;
+}
 </script>
-</body>
-
-
-   

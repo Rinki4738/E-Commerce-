@@ -7,16 +7,18 @@
 
     <h2 class="mb-4 text-center">Login to Your Account</h2>
     
-    <form action="/login" method="POST">
+    <form action="/login" method="POST" onsubmit="return validateLogin()">
       
       <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
+        <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
         <input type="text" name="username" id="username" class="form-control" placeholder="Enter username" required>
+        <small class="text-danger d-none" id="usernameError">Username is required</small>
       </div>
 
       <div class="mb-4">
-        <label for="password" class="form-label">Password</label>
+        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
         <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
+        <small class="text-danger d-none" id="passwordError">Password is required</small>
       </div>
 
       <div class="d-grid mb-3">
@@ -31,3 +33,30 @@
     </form>
   </div>
 </div>
+
+<script>
+function validateLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    
+    let isValid = true;
+    
+    // Reset error messages
+    document.getElementById('usernameError').classList.add('d-none');
+    document.getElementById('passwordError').classList.add('d-none');
+    
+    // Validate username
+    if (!username) {
+        document.getElementById('usernameError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    // Validate password
+    if (!password) {
+        document.getElementById('passwordError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+</script>

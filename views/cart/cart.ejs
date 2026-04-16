@@ -31,12 +31,42 @@
             <h4>Total: ₹<%= total %></h4>
         </div>
 
-        <form action="/payment_gateway/payumoney" method="POST" class="mt-3">
-            <input type="hidden" name="amount" value="<%= total %>" />
-            <input type="hidden" name="phone" value="9999999999" />
-            <input type="hidden" name="service_provider" value="payu_paisa" />
-            <input type="hidden" name="productinfo" value="educational purpose" />
-            <button type="submit" class="btn btn-success btn-lg">Pay ₹<%= total %></button>
-        </form>
+        <button id="checkout-btn" class="btn btn-success btn-lg mt-3" onclick="initiateCheckout()">
+            Pay ₹<%= total %> with Stripe
+        </button>
     <% } %>
 </div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    async function initiateCheckout() {
+        try {
+            const response = await fetch('/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+
+            // Redirect to Stripe Checkout
+            const stripe = Stripe('<%= process.env.STRIPE_PUBLISHABLE_KEY %>');
+            const result = await stripe.redirectToCheckout({
+                sessionId: data.sessionId
+            });
+
+            if (result.error) {
+                alert('Error: ' + result.error.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+</script>

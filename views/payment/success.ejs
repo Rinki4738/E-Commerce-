@@ -1,0 +1,51 @@
+<% layout('layouts/boilerplate') %>
+<%- include('../partials/nav') %>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h2 class="card-title text-success mb-3">Payment Successful!</h2>
+                    <p class="card-text mb-3">
+                        Thank you for your purchase. Your payment has been processed successfully.
+                    </p>
+
+                    <% if (order) { %>
+                        <div class="alert alert-info" role="alert">
+                            <h5>Order Details</h5>
+                            <p><strong>Order ID:</strong> <%= order._id %></p>
+                            <p><strong>Total Amount:</strong> ₹<%= order.totalAmount %></p>
+                            <p><strong>Payment Status:</strong> <span class="badge bg-success"><%= order.paymentStatus %></span></p>
+                            <p><strong>Date:</strong> <%= new Date(order.createdAt).toLocaleDateString() %></p>
+                        </div>
+
+                        <div class="mb-3">
+                            <h5>Items Purchased:</h5>
+                            <ul class="list-group">
+                                <% for (let item of order.items) { %>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span><%= item.product.name || 'Product' %></span>
+                                        <span>₹<%= item.price %></span>
+                                    </li>
+                                <% } %>
+                            </ul>
+                        </div>
+                    <% } %>
+
+                    <div class="mt-4">
+                        <p>A confirmation email has been sent to your registered email address.</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="/" class="btn btn-primary me-2">Continue Shopping</a>
+                        <a href="/user/cart" class="btn btn-outline-primary">View Cart</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

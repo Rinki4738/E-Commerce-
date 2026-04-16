@@ -7,25 +7,29 @@
 
     <h2 class="mb-4 text-center">Create a New Account</h2>
     
-    <form action="/register" method="POST">
+    <form action="/register" method="POST" onsubmit="return validateSignup()">
 
       <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
-        <input type="text" name="username" id="username" class="form-control" placeholder="Enter username" required>
+        <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+        <input type="text" name="username" id="username" class="form-control" placeholder="Enter username (3-20 chars)" required minlength="3" maxlength="20">
+        <small class="text-danger d-none" id="usernameError">Username must be 3-20 characters</small>
       </div>
 
       <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
+        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="Enter valid email" required>
+        <small class="text-danger d-none" id="emailError">Please enter a valid email address</small>
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+        <input type="password" name="password" id="password" class="form-control" placeholder="Minimum 6 characters" required minlength="6">
+        <small class="form-text text-muted">Must be at least 6 characters long</small>
+        <small class="text-danger d-none" id="passwordError">Password must be at least 6 characters</small>
       </div>
 
       <div class="mb-4">
-        <label for="email" class="form-label">Email</label>
-        <input type="email" name="email" id="email" class="form-control" placeholder="Enter email" required>
-      </div>
-
-      <div class="mb-4">
-        <label class="form-label d-block">Register as:</label>
+        <label class="form-label d-block">Register as: <span class="text-danger">*</span></label>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="role" id="buyer" value="Buyer" required>
           <label class="form-check-label" for="buyer">Buyer</label>
@@ -34,6 +38,7 @@
           <input class="form-check-input" type="radio" name="role" id="seller" value="Seller" required>
           <label class="form-check-label" for="seller">Seller</label>
         </div>
+        <small class="text-danger d-none" id="roleError">Please select a role</small>
       </div>
 
       <div class="d-grid mb-3">
@@ -44,3 +49,47 @@
     </form>
   </div>
 </div>
+
+<script>
+function validateSignup() {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const role = document.querySelector('input[name="role"]:checked').value;
+    
+    let isValid = true;
+    
+    // Reset error messages
+    document.getElementById('usernameError').classList.add('d-none');
+    document.getElementById('emailError').classList.add('d-none');
+    document.getElementById('passwordError').classList.add('d-none');
+    document.getElementById('roleError').classList.add('d-none');
+    
+    // Validate username
+    if (username.length < 3 || username.length > 20) {
+        document.getElementById('usernameError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        document.getElementById('emailError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    // Validate password
+    if (password.length < 6) {
+        document.getElementById('passwordError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    // Validate role
+    if (!role) {
+        document.getElementById('roleError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+</script>

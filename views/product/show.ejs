@@ -37,26 +37,31 @@
     <!-- Review Section -->
     <div class="col-lg-6 mt-4 mt-lg-0">
       <h2 class="mb-3">Leave a Review</h2>
-      <form action="/products/<%= foundproduct.id %>/review" method="POST" class="mb-4">
+      <form id="reviewForm" action="/products/<%= foundproduct.id %>/review" method="POST" class="mb-4" onsubmit="return validateReview()">
         <!-- Rating -->
-        <fieldset class="starability-basic mb-2">
-          <input type="radio" id="no-rate" class="input-no-rate" name="rating" value="0" checked aria-label="No rating." />
-          <input type="radio" id="first-rate1" name="rating" value="1" />
-          <label for="first-rate1" title="Terrible">1 star</label>
-          <input type="radio" id="first-rate2" name="rating" value="2" />
-          <label for="first-rate2" title="Not good">2 stars</label>
-          <input type="radio" id="first-rate3" name="rating" value="3" />
-          <label for="first-rate3" title="Average">3 stars</label>
-          <input type="radio" id="first-rate4" name="rating" value="4" />
-          <label for="first-rate4" title="Very good">4 stars</label>
-          <input type="radio" id="first-rate5" name="rating" value="5" />
-          <label for="first-rate5" title="Amazing">5 stars</label>
-        </fieldset>
+        <div class="mb-2">
+          <label class="form-label">Rating <span class="text-danger">*</span></label>
+          <fieldset class="starability-basic mb-2">
+            <input type="radio" id="no-rate" class="input-no-rate" name="rating" value="0" checked aria-label="No rating." />
+            <input type="radio" id="first-rate1" name="rating" value="1" />
+            <label for="first-rate1" title="Terrible">1 star</label>
+            <input type="radio" id="first-rate2" name="rating" value="2" />
+            <label for="first-rate2" title="Not good">2 stars</label>
+            <input type="radio" id="first-rate3" name="rating" value="3" />
+            <label for="first-rate3" title="Average">3 stars</label>
+            <input type="radio" id="first-rate4" name="rating" value="4" />
+            <label for="first-rate4" title="Very good">4 stars</label>
+            <input type="radio" id="first-rate5" name="rating" value="5" />
+            <label for="first-rate5" title="Amazing">5 stars</label>
+          </fieldset>
+          <small class="text-danger d-none" id="ratingError">Please select a rating</small>
+        </div>
 
         <!-- Comment -->
         <div class="mb-3">
-          <label for="comment" class="form-label">Comment</label>
-          <textarea name="comment" class="form-control" rows="2" required></textarea>
+          <label for="comment" class="form-label">Comment <span class="text-danger">*</span></label>
+          <textarea id="comment" name="comment" class="form-control" rows="2" placeholder="Share your thoughts..." minlength="5"></textarea>
+          <small class="text-danger d-none" id="commentError">Comment must be at least 5 characters</small>
         </div>
 
         <!-- Submit -->
@@ -65,20 +70,27 @@
 
       <!-- Show Existing Reviews -->
       <% if (foundproduct.reviews.length > 0) { %>
+        <h3 class="mb-3">Reviews (<%= foundproduct.reviews.length %>)</h3>
         <% foundproduct.reviews.forEach(item => { %>
           <div class="card mb-3">
-            <div class="card-header">
-              <%= item.createdAt ? item.createdAt.toDateString() : '' %>
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <strong><%= item.author ? item.author.username : 'Unknown' %></strong>
+                <br>
+                <small class="text-muted"><%= item.createdAt ? item.createdAt.toDateString() : '' %></small>
+              </div>
+              <% if (currentUser && (currentUser._id.toString() === item.author._id.toString() || currentUser.role === 'Admin')) { %>
+                <button class="btn btn-sm btn-danger" onclick="deleteReview('<%= item._id %>')">Delete</button>
+              <% } %>
             </div>
             <div class="card-body">
               <p class="starability-result" data-rating="<%= item.rating %>">Rated: <%= item.rating %> stars</p>
-              <p class="card-text">Comment: <%= item.comment %></p>
-              <a href="#" class="btn btn-sm btn-danger">Delete</a>
+              <p class="card-text"><%= item.comment %></p>
             </div>
           </div>
         <% }) %>
       <% } else { %>
-        <p>No reviews yet.</p>
+        <p class="text-muted">No reviews yet. Be the first to review!</p>
       <% } %>
     </div>
   </div>
@@ -117,3 +129,59 @@
     </form>
   </div>
 </div>
+
+<script>
+// Validate review form before submission
+function validateReview() {
+    const rating = document.querySelector('input[name="rating"]:checked').value;
+    const comment = document.getElementById('comment').value;
+    
+    let isValid = true;
+    
+    // Reset error messages
+    document.getElementById('ratingError').classList.add('d-none');
+    document.getElementById('commentError').classList.add('d-none');
+    
+    // Validate rating
+    if (rating == 0 || rating < 1) {
+        document.getElementById('ratingError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    // Validate comment
+    if (comment.trim().length < 5) {
+        document.getElementById('commentError').classList.remove('d-none');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+// Delete review via AJAX
+function deleteReview(reviewId) {
+    if (confirm('Are you sure you want to delete this review?')) {
+        fetch(`/reviews/${reviewId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success alert
+                alert('Review deleted successfully');
+                // Reload page to refresh reviews
+                location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Could not delete review'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the review');
+        });
+    }
+}
+</script>
+
