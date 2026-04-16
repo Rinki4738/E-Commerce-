@@ -69,17 +69,17 @@
       </form>
 
       <!-- Show Existing Reviews -->
-      <% if (foundproduct.reviews.length > 0) { %>
+      <% if (foundproduct.reviews && foundproduct.reviews.length > 0) { %>
         <h3 class="mb-3">Reviews (<%= foundproduct.reviews.length %>)</h3>
         <% foundproduct.reviews.forEach(item => { %>
           <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
               <div>
-                <strong><%= item.author ? item.author.username : 'Unknown' %></strong>
+               <strong><%= item.author && item.author.username ? item.author.username : 'Unknown' %></strong>
                 <br>
                 <small class="text-muted"><%= item.createdAt ? item.createdAt.toDateString() : '' %></small>
               </div>
-              <% if (currentUser && (currentUser._id.toString() === item.author._id.toString() || currentUser.role === 'Admin')) { %>
+             <% if (currentUser && item.author && (currentUser._id.toString() === item.author._id.toString() || currentUser.role === 'Admin')) { %>
                 <button class="btn btn-sm btn-danger" onclick="deleteReview('<%= item._id %>')">Delete</button>
               <% } %>
             </div>
